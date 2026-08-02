@@ -74,7 +74,15 @@ export class PhaserMapAdapter {
       y: (event.clientY - rect.top) * this.scene.cameras.main.height / rect.height
     };
   }
-  screenToWorld({ x, y }) { const point = this.scene.cameras.main.getWorldPoint(x, y); return { x: point.x, y: point.y }; }
+  screenToWorld({ x, y }) {
+    // CanvasWorld is rendered with exactly this translation and scale (see
+    // MapScene). Do not use Camera.getWorldPoint here: Phaser derives that
+    // value from the camera matrix prepared during the last render. Input can
+    // change scroll/zoom between renders, leaving that matrix one input event
+    // behind and making the hit-test offset grow after panning or zooming.
+    const c = this.scene.cameras.main;
+    return { x: x / c.zoom + c.scrollX, y: y / c.zoom + c.scrollY };
+  }
   worldToScreen({ x, y }) { const c = this.scene.cameras.main; return { x: (x-c.scrollX)*c.zoom, y: (y-c.scrollY)*c.zoom }; }
   cameraChanged() { clearTimeout(this.cameraTimer); this.cameraTimer=setTimeout(()=>this.controller.emit('camera-changed',{ camera:this.scene.cameras.main }),50); }
   destroy() { this.abort?.abort(); this.observer?.disconnect(); this.game?.destroy(true); }
