@@ -24,7 +24,11 @@ export class RegionLayer {
     }
   }
   hitTest(x, y, context) {
-    return this.index?.search(x, y).reverse().find(view => context.isPointInPath(view.path, x, y, 'evenodd')) || null;
+    context.save();
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    const hit = this.index?.search(x, y).reverse().find(view => context.isPointInPath(view.path, x, y, 'evenodd')) || null;
+    context.restore();
+    return hit;
   }
   clear() { this.views.clear(); this.index = new SpatialIndex(); }
 }
