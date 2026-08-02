@@ -29,16 +29,18 @@
       <div class="map-toolbar">
         <span id="map-hint">Klicke ein Gebiet an, um sein Land auszuwählen.</span>
         <div class="map-tools">
-          <div class="zoom-controls" aria-label="Kartenzoom">
-            <button id="zoom-out" type="button" class="tool-button" title="Verkleinern" aria-label="Karte verkleinern">−</button>
-            <output id="zoom-level" for="zoom-in zoom-out">100 %</output>
-            <button id="zoom-in" type="button" class="tool-button" title="Vergrößern" aria-label="Karte vergrößern">＋</button>
-            <button id="zoom-reset" type="button" class="tool-button reset-button" title="Zoom zurücksetzen">Zurücksetzen</button>
-          </div>
           <label><input id="paint-mode" type="checkbox"> Gebiete direkt zuweisen</label>
         </div>
       </div>
-      <div id="map-wrap"><svg id="editor-map"></svg></div>
+      <div class="map-viewport">
+        <div class="zoom-controls" aria-label="Kartenzoom">
+          <button id="zoom-out" type="button" class="tool-button" title="Verkleinern" aria-label="Karte verkleinern">−</button>
+          <output id="zoom-level" for="zoom-in zoom-out">100 %</output>
+          <button id="zoom-in" type="button" class="tool-button" title="Vergrößern" aria-label="Karte vergrößern">＋</button>
+          <button id="zoom-reset" type="button" class="tool-button reset-button" title="Zoom zurücksetzen">100 %</button>
+        </div>
+        <div id="map-wrap"><svg id="editor-map"></svg></div>
+      </div>
       <div id="status">Bereit</div>
     </section>
     <aside class="detail-pane">
