@@ -34,8 +34,8 @@ class CanvasWorld extends Phaser.GameObjects.GameObject {
 }
 
 export class MapScene extends Phaser.Scene {
-  constructor() { super('MapScene'); }
-  init(data) { this.bridge = data.bridge; this.model = { regions: new RegionLayer(this), labels: [], cities: [], units: [], selected: null, hovered: null }; }
+  constructor(bridge) { super('MapScene'); this.bridge = bridge; }
+  init(data = {}) { this.bridge = data.bridge || this.bridge; this.model = { regions: new RegionLayer(this), labels: [], cities: [], units: [], selected: null, hovered: null }; }
   create() {
     this.add.existing(new CanvasWorld(this, this.model));
     this.input.on('pointermove', pointer => this.bridge.handlePointerMove(pointer));
