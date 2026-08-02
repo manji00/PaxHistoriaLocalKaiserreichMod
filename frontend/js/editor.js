@@ -1,5 +1,5 @@
 const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 4;
+const MAX_ZOOM = 6;
 const ZOOM_STEP = 0.25;
 const MIN_SCENARIO_PANE_WIDTH = 230;
 const DEFAULT_SCENARIO_PANE_WIDTH = 310;
@@ -394,9 +394,23 @@ function applyZoom() {
 }
 
 function handleMapWheel(event) {
-  if (!event.ctrlKey) return;
   event.preventDefault();
-  const direction = event.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP;
+
+  const mapWrap = $('#map-wrap');
+  const deltaMultiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 24 : 1;
+  const delta = event.deltaY * deltaMultiplier;
+
+  if (event.ctrlKey) {
+    mapWrap.scrollTop += delta;
+    return;
+  }
+
+  if (event.altKey) {
+    mapWrap.scrollLeft += delta;
+    return;
+  }
+
+  const direction = delta < 0 ? ZOOM_STEP : -ZOOM_STEP;
   setZoom(zoom + direction, event);
 }
 
