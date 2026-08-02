@@ -39,7 +39,7 @@
           <button id="zoom-in" type="button" class="tool-button" title="Vergrößern" aria-label="Karte vergrößern">＋</button>
           <button id="zoom-reset" type="button" class="tool-button reset-button" title="Zoom zurücksetzen">100 %</button>
         </div>
-        <div id="map-wrap"><svg id="editor-map"></svg></div>
+        <div id="map-wrap"><div id="editor-map"></div></div>
       </div>
       <div id="status">Bereit</div>
     </section>
@@ -50,6 +50,9 @@
     </aside>
   </main>
   <div id="toast"></div>
-  <script src="js/editor.js"></script>
+  <script type="importmap">
+    { "imports": { "phaser": "https://esm.sh/phaser@4.0.0-rc.5" } }
+  </script>
+  <script type="module" src="js/editor.js"></script>
 </body>
 </html>
