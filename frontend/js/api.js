@@ -3,10 +3,14 @@
  * Handles all communication with the backend server
  */
 
-// Dynamically resolve API base from browser origin to avoid localhost vs 127.0.0.1 mismatch
-const API_BASE = (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http'))
-    ? `${window.location.origin}/api`
-    : 'http://127.0.0.1:3000/api';
+// Use the Express backend even when the frontend is opened through a local
+// development server (for example VS Code Live Server on port 5500).
+const isHttpPage = typeof window !== 'undefined' && window.location?.protocol.startsWith('http');
+const isLocalHost = isHttpPage && ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const BACKEND_ORIGIN = isLocalHost && window.location.port !== '3000'
+    ? `${window.location.protocol}//${window.location.hostname}:3000`
+    : isHttpPage ? window.location.origin : 'http://127.0.0.1:3000';
+const API_BASE = `${BACKEND_ORIGIN}/api`;
 
 class ApiClient {
     constructor() {
@@ -38,12 +42,25 @@ class ApiClient {
         try {
             const response = await fetch(url, mergedOptions);
 
-            if (!response.ok) {
-                const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-                throw new Error(error.error || `HTTP ${response.status}`);
+            const contentType = response.headers.get('content-type') || '';
+            const body = await response.text();
+            let value;
+
+            if (contentType.includes('application/json')) {
+                try {
+                    value = JSON.parse(body);
+                } catch (error) {
+                    throw new Error(`Invalid JSON from ${url}: ${error.message}`);
+                }
+            } else {
+                throw new Error(`Expected JSON from ${url}, received ${contentType || 'an unknown content type'} (HTTP ${response.status})`);
             }
 
-            return await response.json();
+            if (!response.ok) {
+                throw new Error(value.error || `HTTP ${response.status}`);
+            }
+
+            return value;
         } catch (error) {
             console.error(`API Error (${endpoint}):`, error);
             throw error;
@@ -242,12 +259,12 @@ class ApiClient {
 
     // ==================== Map ====================
 
-    async getMapGeoJSON() {
-        return this.request('/map/geojson');
+    async getMapGeoJSON(scenarioId = 'original_wk') {
+        return this.request(`/map/geojson?scenario_id=${encodeURIComponent(scenarioId)}`);
     }
 
-    async getMapColors() {
-        return this.request('/map/colors');
+    async getMapColors(scenarioId = 'original_wk') {
+        return this.request(`/map/colors?scenario_id=${encodeURIComponent(scenarioId)}`);
     }
 
     async searchMap(query) {
@@ -281,8 +298,7 @@ class WebSocketClient {
 
     connect() {
         // Dynamically resolve WebSocket URL from browser origin
-        const wsProtocol = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
-        const wsUrl = `${wsProtocol}//${window.location.host}`;
+        const wsUrl = BACKEND_ORIGIN.replace(/^http/, 'ws');
 
         try {
             this.ws = new WebSocket(wsUrl);
