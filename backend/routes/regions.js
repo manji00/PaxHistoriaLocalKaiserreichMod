@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const fs = require('fs');
+const scenarioService = require('../services/scenario-service');
 
 const mapDataPath = path.join(__dirname, '../../data/hoi4_map.json');
 const regionMetadataPath = path.join(__dirname, '../../data/region_metadata.json');
@@ -27,8 +28,12 @@ function getRegionMetadata() {
 router.get('/', async (req, res) => {
     try {
         const { nation_code, save_id } = req.query;
-        const mapData = getMapData();
-        const metadata = getRegionMetadata();
+        let selectedScenario = req.query.scenario_id || scenarioService.defaultScenarioId;
+        if (save_id) {
+            try { const loaded = await new (require('../services/game-engine'))().loadGame(save_id); selectedScenario = loaded.scenarioId; } catch (_) {}
+        }
+        const mapData = scenarioService.readJson(selectedScenario, 'regions.json', { regions: [] });
+        const metadata = scenarioService.readJson(selectedScenario, 'region_metadata.json', {});
 
         // If save_id is provided, we need to load occupations
         let occupations = {};

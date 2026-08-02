@@ -6,6 +6,8 @@
 const app = {
     currentGame: null,
     nations: [],
+    scenarios: [],
+    selectedScenario: null,
     cityManager: null,
     unitManager: null,
 
@@ -39,8 +41,8 @@ const app = {
             eventsPanel.init();
             timelinePanel.init();
 
-            // Load nations
-            await this.loadNations();
+            // Scenarios are the entry point for all world data.
+            this.scenarios = await api.getScenarios();
 
             // Load LLM settings for footer initialization
             try {
@@ -70,9 +72,9 @@ const app = {
     /**
      * Load nations from database
      */
-    async loadNations() {
+    async loadNations(scenarioId = this.selectedScenario?.id || 'original_wk') {
         try {
-            this.nations = await api.getNations();
+            this.nations = await api.getNations(scenarioId);
             console.log(`Loaded ${this.nations.length} nations`);
         } catch (error) {
             console.error('Failed to load nations:', error);
@@ -144,7 +146,7 @@ const app = {
     setupEventHandlers() {
         // Main menu buttons
         document.getElementById('btn-new-game').addEventListener('click', () => {
-            this.showNationSelection();
+            this.showScenarioSelection();
         });
 
         document.getElementById('btn-load-game').addEventListener('click', () => {
@@ -295,6 +297,28 @@ const app = {
     /**
      * Show nation selection modal
      */
+    async showScenarioSelection() {
+        this.hideMainMenu();
+        const grid = document.getElementById('scenario-grid');
+        grid.innerHTML = '';
+        this.scenarios.forEach(scenario => {
+            const card = document.createElement('button');
+            card.className = 'scenario-card';
+            card.innerHTML = `<h3>${scenario.name}</h3><p>${scenario.description}</p><span class="scenario-period">${scenario.period}</span>`;
+            card.addEventListener('click', async () => {
+                this.selectedScenario = scenario;
+                await this.loadNations(scenario.id);
+                document.getElementById('start-date').value = scenario.startDate;
+                document.getElementById('start-date').min = scenario.minDate;
+                document.getElementById('start-date').max = scenario.maxDate;
+                document.getElementById('scenario-select-modal').classList.add('hidden');
+                this.showNationSelection();
+            });
+            grid.appendChild(card);
+        });
+        document.getElementById('scenario-select-modal').classList.remove('hidden');
+    },
+
     showNationSelection() {
         this.hideMainMenu();
         this.renderNationGrid();
@@ -402,13 +426,14 @@ const app = {
         btn.textContent = 'Creating game...';
 
         try {
-            const game = await api.createGame(nationCode, startDate);
+            const game = await api.createGame(nationCode, startDate, this.selectedScenario.id);
 
             this.currentGame = {
                 saveId: game.save_id,
                 playerNation: game.player_nation,
                 currentDate: game.current_date,
-                turnNumber: game.turn_number
+                turnNumber: game.turn_number,
+                scenario: game.scenario
             };
 
             this.closeAllModals();
@@ -495,7 +520,8 @@ const app = {
                 saveId: saveId,
                 playerNation: game.playerNation,
                 currentDate: game.currentDate,
-                turnNumber: game.turnNumber
+                turnNumber: game.turnNumber,
+                scenario: game.scenario
             };
 
             // Add existing events
@@ -518,7 +544,7 @@ const app = {
         document.getElementById('game-container').classList.remove('hidden');
 
         // Update UI with game info
-        document.getElementById('scenario-name').textContent = 'World War II';
+        document.getElementById('scenario-name').textContent = this.currentGame.scenario?.name || 'Original – Weltkrieg';
         document.getElementById('player-nation-name').textContent = `Playing as: ${this.currentGame.playerNation.name}`;
         document.getElementById('current-date').textContent = this.formatDate(this.currentGame.currentDate);
 

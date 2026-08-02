@@ -3,7 +3,7 @@ const path = require('path');
 const llmService = require('./llm-service');
 
 const savesDir = path.join(__dirname, '../../data/saves');
-const nationsPath = path.join(__dirname, '../../data/nations_v2.json');
+const scenarioService = require('./scenario-service');
 
 /**
  * Game Engine - File-based game logic for Pax Historia
@@ -15,18 +15,17 @@ class GameEngine {
         }
     }
 
-    getNations() {
-        if (fs.existsSync(nationsPath)) {
-            return JSON.parse(fs.readFileSync(nationsPath, 'utf-8'));
-        }
-        return {};
+    getNations(scenarioId = scenarioService.defaultScenarioId) {
+        return scenarioService.readJson(scenarioId, 'nations.json', {});
     }
 
     /**
      * Create a new game
      */
-    async createGame(playerNationCode, startDate = '1936-01-01') {
-        const nations = this.getNations();
+    async createGame(playerNationCode, startDate, scenarioId = scenarioService.defaultScenarioId) {
+        const scenario = scenarioService.getScenario(scenarioId);
+        startDate = startDate || scenario.startDate;
+        const nations = this.getNations(scenarioId);
         const playerNation = nations[playerNationCode];
 
         if (!playerNation) {
@@ -36,7 +35,8 @@ class GameEngine {
         const saveId = Date.now().toString();
         const gameState = {
             id: saveId,
-            name: `${playerNation.name} - ${startDate}`,
+            name: `${playerNation.name} - ${scenario.name} - ${startDate}`,
+            scenarioId: scenarioId,
             playerNationCode: playerNationCode,
             currentDate: startDate,
             turnNumber: 1,
@@ -47,8 +47,8 @@ class GameEngine {
             units: [],
             history: [],
             created_at: new Date().toISOString(),
-            world_context: "Historical 1936 start. Europe is on the brink of tension as ideologies clash.",
-            simulation_rules: "1. Realistic consequences. 2. Diplomatic weight. 3. Historical plausibility with player flexibility."
+            world_context: scenario.worldContext,
+            simulation_rules: scenario.simulationRules
         };
 
         // Initialize all nations
@@ -76,7 +76,8 @@ class GameEngine {
             save_id: saveId,
             player_nation: playerNation,
             current_date: startDate,
-            turn_number: 1
+            turn_number: 1,
+            scenario: scenario
         };
     }
 
@@ -122,10 +123,13 @@ class GameEngine {
         }
 
         const gameState = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-        const nations = this.getNations();
+        const scenarioId = gameState.scenarioId || scenarioService.defaultScenarioId;
+        const nations = this.getNations(scenarioId);
 
         return {
             ...gameState,
+            scenarioId,
+            scenario: scenarioService.getScenario(scenarioId),
             playerNation: nations[gameState.playerNationCode],
             events: gameState.events || [],
             actions: gameState.actions || []
@@ -135,15 +139,18 @@ class GameEngine {
     async getSaves() {
         if (!fs.existsSync(savesDir)) return [];
         const files = fs.readdirSync(savesDir).filter(f => f.endsWith('.json'));
-        const nations = this.getNations();
 
         return files.map(file => {
             const data = JSON.parse(fs.readFileSync(path.join(savesDir, file), 'utf-8'));
+            const scenarioId = data.scenarioId || scenarioService.defaultScenarioId;
+            const nations = this.getNations(scenarioId);
             return {
                 id: data.id,
                 name: data.name,
                 nation_code: data.playerNationCode,
                 nation_name: nations[data.playerNationCode]?.name || 'Unknown',
+                scenario_id: scenarioId,
+                scenario_name: scenarioService.getScenario(scenarioId).name,
                 current_date: data.currentDate,
                 turn_number: data.turnNumber || 1,
                 updated_at: data.created_at
@@ -164,30 +171,7 @@ class GameEngine {
      * Create starting units for the world
      */
     createStartingUnits(gameState) {
-        const startingUnits = [
-            // ITALY
-            { name: "1st Eritrean Division", type: "infantry", nation: "ITA", region: "Asmara", coords: [860, 460] },
-            { name: "2nd Eritrean Division", type: "infantry", nation: "ITA", region: "Massawa", coords: [870, 450] },
-            { name: "Native Army Corps", type: "infantry", nation: "ITA", region: "Eritrea", coords: [850, 470] },
-            { name: "Granatieri Division", type: "infantry", nation: "ITA", region: "Adigrat", coords: [880, 490] },
-
-            // ETHIOPIA
-            { name: "Imperial Guard Kebur Zabagna", type: "infantry", nation: "ETH", region: "Addis Ababa", coords: [880, 480] },
-            { name: "Ogaden Army", type: "infantry", nation: "ETH", region: "Ogaden", coords: [920, 500] },
-            { name: "Northern Army", type: "infantry", nation: "ETH", region: "Amhara", coords: [860, 490] },
-
-            // GERMANY
-            { name: "1st Panzer Division", type: "armor", nation: "GER", region: "Berlin", coords: [750, 120] },
-            { name: "1st Infantry Division", type: "infantry", nation: "GER", region: "East Prussia", coords: [800, 100] },
-
-            // FRANCE
-            { name: "1st Armored Division", type: "armor", nation: "FRA", region: "Paris", coords: [660, 150] },
-            { name: "7th Army", type: "infantry", nation: "FRA", region: "Metz", coords: [690, 140] },
-
-            // UK
-            { name: "Home Fleet", type: "naval", nation: "ENG", region: "Scapa Flow", coords: [620, 80] },
-            { name: "British Expeditionary Force", type: "infantry", nation: "ENG", region: "London", coords: [640, 125] }
-        ];
+        const startingUnits = scenarioService.readJson(gameState.scenarioId, 'units.json', []);
 
         gameState.units = startingUnits.map((u, index) => ({
             id: `unit_${Date.now()}_${index}`,
@@ -286,7 +270,7 @@ class GameEngine {
     }
 
     buildWorldStateSummary(gameState) {
-        const nations = this.getNations();
+        const nations = this.getNations(gameState.scenarioId);
         const summary = {};
 
         // 1. Identify priority nations to stay within token limits
@@ -360,7 +344,7 @@ class GameEngine {
 
     async getAdvisorContext(saveId) {
         const gameState = await this.loadGame(saveId);
-        const nations = this.getNations();
+        const nations = this.getNations(gameState.scenarioId);
 
         const playerFull = {
             ...gameState.playerNation,
@@ -389,7 +373,7 @@ class GameEngine {
      */
     async getGameContext(saveId) {
         const gameState = await this.loadGame(saveId);
-        const nations = this.getNations();
+        const nations = this.getNations(gameState.scenarioId);
 
         return {
             saveId: saveId,

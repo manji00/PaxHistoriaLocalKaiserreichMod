@@ -55,10 +55,14 @@ class ApiClient {
         return this.request('/health');
     }
 
+    async getScenarios() {
+        return this.request('/scenarios');
+    }
+
     // ==================== Nations ====================
 
-    async getNations(saveId = null) {
-        const endpoint = saveId ? `/nations?save_id=${saveId}` : '/nations';
+    async getNations(scenarioId = 'original_wk') {
+        const endpoint = `/nations?scenario_id=${encodeURIComponent(scenarioId)}`;
         return this.request(endpoint);
     }
 
@@ -80,10 +84,10 @@ class ApiClient {
 
     // ==================== Game Management ====================
 
-    async createGame(nationCode, startDate) {
+    async createGame(nationCode, startDate, scenarioId) {
         return this.request('/game/new', {
             method: 'POST',
-            body: { nationCode, startDate }
+            body: { nationCode, startDate, scenarioId }
         });
     }
 
