@@ -1,0 +1,21 @@
+{
+  "name": "pax-historia-frontend",
+  "private": true,
+  "version": "4.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "vitest run",
+    "map:build": "node ../tools/map-build/build-map.js",
+    "map:validate": "node ../tools/map-build/validate-map.js"
+  },
+  "dependencies": {
+    "phaser": "4.0.0-rc.5"
+  },
+  "devDependencies": {
+    "vite": "7.1.0",
+    "vitest": "3.2.4"
+  }
+}
