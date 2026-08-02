@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pax Historia – Szenario-Editor</title>
+  <link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+  <header><a href="/">← Spiel</a><div><strong>SZENARIO-WERKSTATT</strong><small>Karte, Länder und Gebiete bearbeiten</small></div><button id="save">Änderungen speichern</button></header>
+  <main>
+    <aside class="scenario-pane">
+      <label>Szenario<select id="scenario-select"></select></label>
+      <button id="new-scenario" class="secondary">＋ Szenario duplizieren</button>
+      <section id="meta-form"><h2>Szenario</h2></section>
+      <div class="section-title"><h2>Länder</h2><button id="add-nation" title="Land erstellen">＋</button></div>
+      <input id="nation-search" placeholder="Land oder Code suchen …">
+      <div id="nation-list" class="nation-list"></div>
+    </aside>
+    <section class="map-pane">
+      <div class="map-toolbar"><span id="map-hint">Wähle ein Land und klicke Gebiete an, um sie zuzuweisen.</span><label><input id="paint-mode" type="checkbox"> Gebiete direkt zuweisen</label></div>
+      <div id="map-wrap"><svg id="editor-map"></svg></div>
+      <div id="status">Bereit</div>
+    </section>
+    <aside class="detail-pane">
+      <div id="empty-detail"><h2>Auswahl</h2><p>Wähle links ein Land oder klicke ein Gebiet auf der Karte.</p></div>
+      <form id="nation-form" class="hidden"><h2>Land bearbeiten</h2></form>
+      <form id="region-form" class="hidden"><h2>Gebiet bearbeiten</h2></form>
+    </aside>
+  </main>
+  <div id="toast"></div>
+  <script src="js/editor.js"></script>
+</body>
+</html>
