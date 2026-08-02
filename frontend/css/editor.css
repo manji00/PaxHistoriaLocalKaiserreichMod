@@ -156,6 +156,7 @@ button {
 #zoom-level { min-width: 48px; color: var(--text); font-size: 12px; text-align: center; }
 .map-viewport { position: relative; flex: 1; min-height: 0; }
 #map-wrap { width: 100%; height: 100%; overflow: auto; background: #b8d7e9; }
+#map-wrap { overflow: hidden; }
 
 .map-viewport > .zoom-controls {
   position: absolute;
@@ -173,14 +174,10 @@ button {
 
 #editor-map {
   display: block;
-  max-width: none;
-  max-height: none;
-  transform-origin: top left;
+  width: 100%;
+  height: 100%;
 }
-
-#editor-map path { cursor: pointer; stroke: #142f40; stroke-width: .35; transition: filter .1s; }
-#editor-map path:hover,
-#editor-map path.selected { filter: brightness(1.35); stroke: #fff; stroke-width: 1.2; }
+#editor-map canvas { display: block; }
 
 #status { height: 38px; min-height: 38px; padding: 10px 16px; border: 0; border-top: 1px solid var(--line); }
 .hidden { display: none !important; }

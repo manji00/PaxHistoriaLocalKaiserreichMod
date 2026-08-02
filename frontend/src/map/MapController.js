@@ -6,9 +6,10 @@ export class MapController extends EventTarget {
   resize() { return this.adapter.resize(); }
   zoomIn() { return this.adapter.zoomIn(); } zoomOut() { return this.adapter.zoomOut(); }
   resetView() { return this.adapter.resetView(); }
+  panBy(x, y) { return this.adapter.panBy(x, y); }
   focusNation(id) { return this.adapter.focusNation(id); }
   focusRegion(id) { return this.adapter.focusRegion(id); }
-  selectRegion(id) { return this.adapter.selectRegion(id); }
+  selectRegion(id, emit) { return this.adapter.selectRegion(id, emit); }
   clearSelection() { return this.adapter.clearSelection(); }
   setLayerVisibility(layer, visible) { return this.adapter.setLayerVisibility(layer, visible); }
   worldToScreen(point) { return this.adapter.worldToScreen(point); }

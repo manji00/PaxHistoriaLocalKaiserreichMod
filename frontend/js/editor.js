@@ -1,7 +1,6 @@
-const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 6;
-const REGION_FOCUS_ZOOM = 6;
-const ZOOM_STEP = 0.25;
+import { MapController } from '../src/map/MapController.js';
+import { PhaserMapAdapter } from '../src/map/PhaserMapAdapter.js';
+
 const MIN_SCENARIO_PANE_WIDTH = 230;
 const DEFAULT_SCENARIO_PANE_WIDTH = 310;
 const SCENARIO_PANE_STORAGE_KEY = 'pax-editor-scenario-pane-width';
@@ -13,6 +12,8 @@ let selectedNation = null;
 let selectedRegion = null;
 let dirty = false;
 let zoom = 1;
+const mapAdapter = new PhaserMapAdapter();
+const mapController = new MapController(mapAdapter);
 
 const backendOrigin = getBackendOrigin();
 
@@ -101,7 +102,7 @@ async function loadScenario() {
   selectedNation = null;
   selectedRegion = null;
   setDirty(false);
-  setZoom(1);
+  await mapController.loadScenario({ id: scenarioId });
   renderAll();
 }
 
@@ -164,22 +165,8 @@ function renderNations() {
 }
 
 function renderMap() {
-  const map = data.regions;
-  const svg = $('#editor-map');
-  svg.setAttribute('viewBox', map.viewBox || `0 0 ${map.width} ${map.height}`);
-  svg.innerHTML = map.regions.map(region => {
-    const nation = data.nations[region.nation_code];
-    const fill = nation?.color || region.fill || '#888';
-    const selectedClass = selectedRegion === region.id ? 'selected' : '';
-
-    return `
-      <path class="${selectedClass}" id="region-${escapeHtml(region.id)}"
-        data-id="${escapeHtml(region.id)}" d="${escapeHtml(region.path)}" fill="${fill}">
-        <title>${escapeHtml(region.name)} · ${escapeHtml(nation?.name || region.nation_code)}</title>
-      </path>
-    `;
-  }).join('');
-  applyZoom();
+  mapAdapter.colors = data.nations;
+  mapController.applyGameState({ regions: data.regions.regions });
 }
 
 function showEmpty() {
@@ -273,37 +260,14 @@ function updateNation(event, code) {
 }
 
 function highlightRegion(id) {
-  document.querySelectorAll('#editor-map path').forEach(path => {
-    path.classList.toggle('selected', path.dataset.id === id);
-  });
+  if (id) mapController.selectRegion(id, false);
+  else mapController.clearSelection();
 }
 
 function focusRegion(id) {
-  const path = document.querySelector(`#editor-map path[data-id="${CSS.escape(id)}"]`);
-  if (!path) return;
-
   selectedRegion = id;
   highlightRegion(id);
-
-  // Region selection always uses the same, predictable detail level. Center
-  // with SVG coordinates instead of screen bounds: the latter still describe
-  // the old layout while the browser is applying a new zoom level.
-  setZoom(REGION_FOCUS_ZOOM);
-
-  const mapWrap = $('#map-wrap');
-  const svg = $('#editor-map');
-  const viewBox = svg.viewBox.baseVal;
-  const pathBounds = path.getBBox();
-  const scaleX = svg.clientWidth / viewBox.width;
-  const scaleY = svg.clientHeight / viewBox.height;
-  const centerX = (pathBounds.x + pathBounds.width / 2 - viewBox.x) * scaleX;
-  const centerY = (pathBounds.y + pathBounds.height / 2 - viewBox.y) * scaleY;
-
-  mapWrap.scrollTo({
-    left: centerX - mapWrap.clientWidth / 2,
-    top: centerY - mapWrap.clientHeight / 2,
-    behavior: 'smooth'
-  });
+  mapController.focusRegion(id);
 }
 
 function showRegion(id) {
@@ -357,81 +321,6 @@ function assignRegion(id) {
   renderNations();
   showNation(selectedNation);
   focusRegion(id);
-}
-
-function handleMapClick(event) {
-  const path = event.target.closest('path');
-  if (!path) return;
-
-  if ($('#paint-mode').checked) {
-    assignRegion(path.dataset.id);
-    return;
-  }
-
-  const region = data.regions.regions.find(item => item.id === path.dataset.id);
-  showNation(region.nation_code);
-  focusRegion(region.id);
-}
-
-function setZoom(nextZoom, pointer) {
-  const mapWrap = $('#map-wrap');
-  const oldZoom = zoom;
-  zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, nextZoom));
-
-  if (!mapWrap) return;
-
-  const rect = mapWrap.getBoundingClientRect();
-  const focusX = pointer ? pointer.clientX - rect.left : mapWrap.clientWidth / 2;
-  const focusY = pointer ? pointer.clientY - rect.top : mapWrap.clientHeight / 2;
-  const contentX = (mapWrap.scrollLeft + focusX) / oldZoom;
-  const contentY = (mapWrap.scrollTop + focusY) / oldZoom;
-
-  applyZoom();
-  mapWrap.scrollLeft = contentX * zoom - focusX;
-  mapWrap.scrollTop = contentY * zoom - focusY;
-}
-
-function applyZoom() {
-  const svg = $('#editor-map');
-  const mapWrap = $('#map-wrap');
-  if (!svg || !mapWrap) return;
-
-  const viewBox = svg.viewBox.baseVal;
-  if (!viewBox.width || !viewBox.height) return;
-
-  // Fit the complete map into the actual viewport at 100%. Zooming then grows
-  // that compact canvas, rather than multiplying an arbitrary 900px minimum
-  // width and a separately calculated percentage height.
-  const fitScale = Math.min(
-    mapWrap.clientWidth / viewBox.width,
-    mapWrap.clientHeight / viewBox.height
-  );
-
-  svg.style.width = `${viewBox.width * fitScale * zoom}px`;
-  svg.style.height = `${viewBox.height * fitScale * zoom}px`;
-  svg.style.minWidth = '0';
-  $('#zoom-level').textContent = `${Math.round(zoom * 100)} %`;
-}
-
-function handleMapWheel(event) {
-  event.preventDefault();
-
-  const mapWrap = $('#map-wrap');
-  const deltaMultiplier = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 24 : 1;
-  const delta = event.deltaY * deltaMultiplier;
-
-  if (event.ctrlKey) {
-    mapWrap.scrollTop += delta;
-    return;
-  }
-
-  if (event.altKey) {
-    mapWrap.scrollLeft += delta;
-    return;
-  }
-
-  const direction = delta < 0 ? ZOOM_STEP : -ZOOM_STEP;
-  setZoom(zoom + direction, event);
 }
 
 function setScenarioPaneWidth(width) {
@@ -546,21 +435,27 @@ function bindEvents() {
     const item = event.target.closest('[data-code]');
     if (item) showNation(item.dataset.code);
   };
-  $('#editor-map').onclick = handleMapClick;
-  $('#editor-map').ondblclick = event => {
-    const path = event.target.closest('path');
-    if (path && !$('#paint-mode').checked) showRegion(path.dataset.id);
-  };
-  $('#map-wrap').addEventListener('wheel', handleMapWheel, { passive: false });
-  $('#zoom-in').onclick = () => setZoom(zoom + ZOOM_STEP);
-  $('#zoom-out').onclick = () => setZoom(zoom - ZOOM_STEP);
-  $('#zoom-reset').onclick = () => setZoom(1);
+  $('#zoom-in').onclick = () => mapController.zoomIn();
+  $('#zoom-out').onclick = () => mapController.zoomOut();
+  $('#zoom-reset').onclick = () => mapController.resetView();
   $('#add-nation').onclick = addNation;
   $('#save').onclick = save;
   $('#new-scenario').onclick = createScenario;
   window.onbeforeunload = () => dirty ? 'Ungespeicherte Änderungen' : undefined;
 }
 
+mapController.addEventListener('region-selected', event => {
+  const region = event.detail;
+  if ($('#paint-mode').checked) assignRegion(region.id);
+  else showRegion(region.id);
+});
+mapController.addEventListener('camera-changed', event => {
+  zoom = event.detail.camera.zoom;
+  $('#zoom-level').textContent = `${Math.round(zoom * 100)} %`;
+});
+
 initializeScenarioPaneResize();
 bindEvents();
-loadScenarios('kaiserreich').catch(error => toast(error.message, true));
+mapController.initialize('#editor-map')
+  .then(() => loadScenarios('kaiserreich'))
+  .catch(error => toast(error.message, true));

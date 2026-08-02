@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { DEPTH } from '../rendering/layers.js';
 import { RegionLayer } from '../layers/RegionLayer.js';
+import { CameraController } from '../CameraController.js';
 
 class CanvasWorld extends Phaser.GameObjects.GameObject {
   constructor(scene, model) {
@@ -47,8 +48,9 @@ export class MapScene extends Phaser.Scene {
     this.add.existing(new CanvasWorld(this, this.model));
     this.input.on('pointermove', pointer => this.bridge.handlePointerMove(pointer));
     this.input.on('pointerup', pointer => this.bridge.handlePointerUp(pointer));
-    this.input.on('wheel', (pointer, _objects, _dx, dy) => this.bridge.handleWheel(pointer, dy));
+    this.cameraController = new CameraController(this, this.bridge);
+    this.cameraController.bind();
     this.bridge.sceneReady(this);
   }
-  shutdown() { this.input.removeAllListeners(); this.model.regions.clear(); }
+  shutdown() { this.cameraController?.destroy(); this.input.removeAllListeners(); this.model.regions.clear(); }
 }
