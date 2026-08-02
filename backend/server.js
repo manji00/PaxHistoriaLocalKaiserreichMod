@@ -65,6 +65,13 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', database: 'none (file-based)' });
 });
 
+// Never let an unknown API request fall through to the HTML SPA fallback.
+// Clients can then report the real HTTP error instead of trying to parse
+// "<!DOCTYPE ..." as JSON.
+app.use('/api', (req, res) => {
+    res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.originalUrl}` });
+});
+
 // Serve frontend
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/index.html'));

@@ -3,7 +3,8 @@ const fields = (values, definitions) => definitions.map(([key,label,type='text',
 const escapeHtml = value => String(value).replace(/[&<>"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]));
 let data, selectedNation, selectedRegion, dirty=false;
 
-async function request(url, options={}) { const response=await fetch(url,{headers:{'Content-Type':'application/json'},...options}); const value=await response.json(); if(!response.ok) throw new Error(value.error||'Request failed'); return value; }
+const backendOrigin=!location.protocol.startsWith('http')?'http://127.0.0.1:3000':['localhost','127.0.0.1'].includes(location.hostname)&&location.port!=='3000'?`${location.protocol}//${location.hostname}:3000`:location.origin;
+async function request(url, options={}) { const response=await fetch(`${backendOrigin}${url}`,{headers:{'Content-Type':'application/json'},...options}); const type=response.headers.get('content-type')||''; if(!type.includes('application/json')) throw new Error(`JSON erwartet, aber ${type||'unbekannter Inhaltstyp'} empfangen (HTTP ${response.status}).`); const value=await response.json(); if(!response.ok) throw new Error(value.error||'Request failed'); return value; }
 function setDirty(value=true){dirty=value; $('#status').textContent=value?'Nicht gespeicherte Änderungen':'Alle Änderungen gespeichert';}
 function toast(message,error=false){const node=$('#toast');node.textContent=message;node.style.background=error?'#552326':'#183626';node.classList.add('show');setTimeout(()=>node.classList.remove('show'),2500)}
 

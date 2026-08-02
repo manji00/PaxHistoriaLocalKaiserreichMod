@@ -48,8 +48,7 @@ class GameMap {
      */
     async loadNationColors() {
         try {
-            const response = await fetch(`/api/map/colors?scenario_id=${encodeURIComponent(app.currentGame?.scenario?.id || 'original_wk')}`);
-            const colors = await response.json();
+            const colors = await api.getMapColors(app.currentGame?.scenario?.id || 'original_wk');
             this.nationColors = colors;
             return colors;
         } catch (error) {
@@ -68,8 +67,7 @@ class GameMap {
             // Load colors first
             await this.loadNationColors();
 
-            const mapRes = await fetch(`/api/map/geojson?scenario_id=${encodeURIComponent(app.currentGame?.scenario?.id || 'original_wk')}`);
-            const mapData = await mapRes.json();
+            const mapData = await api.getMapGeoJSON(app.currentGame?.scenario?.id || 'original_wk');
 
             this.renderSVGMap(mapData);
         } catch (error) {
@@ -92,7 +90,10 @@ class GameMap {
 
         // Fetch original SVG for native rendering
         fetch(app.currentGame?.scenario?.map || 'maps/original_wk.svg')
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status} while loading the scenario map`);
+                return response.text();
+            })
             .then(svgText => {
                 const parser = new DOMParser();
                 const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
