@@ -28,6 +28,40 @@ describe('PhaserMapAdapter pointer coordinates', () => {
   });
 });
 
+describe('PhaserMapAdapter camera coordinates', () => {
+  function cameraAdapter(camera) {
+    const adapter = new PhaserMapAdapter();
+    adapter.scene = { cameras: { main: camera } };
+    return adapter;
+  }
+
+  it('uses the current scroll and zoom rather than Phaser\'s stale render matrix', () => {
+    const camera = {
+      scrollX: 240,
+      scrollY: 80,
+      zoom: 2,
+      getWorldPoint: vi.fn(() => ({ x: -1, y: -1 }))
+    };
+    const adapter = cameraAdapter(camera);
+
+    expect(adapter.screenToWorld({ x: 120, y: 40 })).toEqual({ x: 300, y: 100 });
+    expect(camera.getWorldPoint).not.toHaveBeenCalled();
+  });
+
+  it('keeps screen and world conversions inverse after camera changes', () => {
+    const camera = { scrollX: 25, scrollY: -10, zoom: 0.75 };
+    const adapter = cameraAdapter(camera);
+    const world = { x: 640, y: 215 };
+
+    expect(adapter.screenToWorld(adapter.worldToScreen(world))).toEqual(world);
+
+    camera.scrollX = 310;
+    camera.scrollY = 90;
+    camera.zoom = 3.5;
+    expect(adapter.screenToWorld(adapter.worldToScreen(world))).toEqual(world);
+  });
+});
+
 describe('PhaserMapAdapter selection', () => {
   function selectionAdapter() {
     const adapter = new PhaserMapAdapter();
