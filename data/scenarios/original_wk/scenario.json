@@ -1,0 +1,12 @@
+{
+  "id": "original_wk",
+  "name": "Original – Weltkrieg",
+  "description": "Das bisherige historische Pax-Historia-Szenario.",
+  "period": "1935–1945",
+  "startDate": "1935-12-01",
+  "minDate": "1935-01-01",
+  "maxDate": "1939-09-01",
+  "map": "maps/original_wk.svg",
+  "worldContext": "Historical 1936 start. Europe is on the brink of tension as ideologies clash.",
+  "simulationRules": "1. Realistic consequences. 2. Diplomatic weight. 3. Historical plausibility with player flexibility."
+}

@@ -3589,3 +3589,12 @@ textarea::placeholder {
     align-items: center;
     justify-content: center;
 }
+
+/* Scenario selection */
+.scenario-intro { color: var(--text-secondary); margin: 0 0 1.25rem; }
+.scenario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+.scenario-card { padding: 1.4rem; border: 1px solid rgba(212, 175, 55, .35); background: rgba(14, 22, 34, .92); cursor: pointer; text-align: left; color: inherit; transition: .2s ease; }
+.scenario-card:hover, .scenario-card:focus { border-color: #d4af37; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+.scenario-card h3 { margin: 0 0 .45rem; color: #d4af37; font-family: var(--font-display); }
+.scenario-card p { min-height: 3em; color: var(--text-secondary); }
+.scenario-period { font-family: var(--font-mono); font-size: .78rem; color: #67d4df; }

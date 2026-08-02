@@ -22,7 +22,7 @@ class CityManager {
      */
     async loadCities() {
         try {
-            const response = await fetch('/api/map/cities');
+            const response = await fetch(`/api/map/cities?scenario_id=${encodeURIComponent(app.currentGame?.scenario?.id || 'original_wk')}`);
             if (!response.ok) throw new Error('Failed to fetch cities');
             this.cities = await response.json();
             console.log(`Loaded ${this.cities.length} cities`);

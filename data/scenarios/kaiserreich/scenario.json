@@ -1,0 +1,12 @@
+{
+  "id": "kaiserreich",
+  "name": "Kaiserreich",
+  "description": "Arbeitsgrundlage für das kommende Kaiserreich-Szenario; basiert zunächst auf den Originaldaten.",
+  "period": "1935–1945",
+  "startDate": "1935-12-01",
+  "minDate": "1935-01-01",
+  "maxDate": "1939-09-01",
+  "map": "maps/kaiserreich.svg",
+  "worldContext": "Kaiserreich scenario foundation. Use only the facts and alternate-history setting supplied by this scenario and the evolving game state.",
+  "simulationRules": "1. Realistic consequences. 2. Diplomatic weight. 3. Follow the Kaiserreich scenario data while preserving player freedom."
+}

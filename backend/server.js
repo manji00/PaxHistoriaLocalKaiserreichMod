@@ -16,6 +16,7 @@ const eventsRouter = require('./routes/events');
 const regionsRouter = require('./routes/regions');
 const unitsRouter = require('./routes/units');
 const llmRouter = require('./routes/llm');
+const scenariosRouter = require('./routes/scenarios');
 
 const app = express();
 const server = http.createServer(app);
@@ -49,6 +50,7 @@ app.use('/api/events', eventsRouter);
 app.use('/api/regions', regionsRouter);
 app.use('/api/units', unitsRouter);
 app.use('/api/llm', llmRouter);
+app.use('/api/scenarios', scenariosRouter);
 
 // Ping endpoint for verification
 app.get('/api/ping', (req, res) => {

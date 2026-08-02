@@ -7,7 +7,7 @@ const engine = new GameEngine();
 // Create new game
 router.post('/new', async (req, res) => {
     try {
-        const { nationCode, startDate } = req.body;
+        const { nationCode, startDate, scenarioId } = req.body;
 
         if (!nationCode) {
             return res.status(400).json({ error: 'nationCode is required' });
@@ -15,7 +15,8 @@ router.post('/new', async (req, res) => {
 
         const game = await engine.createGame(
             nationCode.toUpperCase(),
-            startDate || '1936-01-01'
+            startDate,
+            scenarioId
         );
 
         res.json(game);
