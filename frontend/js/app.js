@@ -992,7 +992,11 @@ const app = {
 // model without coupling rendering code to this DOM controller.
 window.app = app;
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+// The legacy UI scripts are loaded dynamically by the ES-module entry point.
+// By the time this final script arrives, DOMContentLoaded may already have
+// fired, so initialize immediately unless the document is still being parsed.
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => app.init(), { once: true });
+} else {
     app.init();
-});
+}
