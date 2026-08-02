@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pax Historia Phaser map geometry",
+  "type": "object",
+  "required": ["version", "scenarioId", "viewBox", "regions", "checksum"],
+  "properties": {
+    "version": { "const": 1 },
+    "scenarioId": { "type": "string" },
+    "checksum": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "regions": { "type": "array", "items": { "type": "object", "required": ["id", "path", "bbox", "centroid"] } }
+  }
+}

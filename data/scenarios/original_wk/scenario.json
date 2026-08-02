@@ -7,6 +7,7 @@
   "minDate": "1935-01-01",
   "maxDate": "1939-09-01",
   "map": "maps/original_wk.svg",
+  "geometry": "maps/original_wk.geometry.json",
   "worldContext": "Historical 1936 start. Europe is on the brink of tension as ideologies clash.",
   "simulationRules": "1. Realistic consequences. 2. Diplomatic weight. 3. Historical plausibility with player flexibility."
 }

@@ -116,10 +116,7 @@ const app = {
             // 3. Refresh Map Ownership
             try {
                 const refreshedRegions = await api.getRegions(this.currentGame.saveId);
-                const svgElement = gameMap.svgLayer ? gameMap.svgLayer.getElement() : null;
-                if (svgElement) {
-                    gameMap.applyNationColorsToSVG(svgElement, refreshedRegions);
-                }
+                gameMap.controller.applyGameState({ regions: refreshedRegions });
             } catch (e) {
                 console.error('Failed to refresh map after turn:', e);
             }
@@ -990,6 +987,10 @@ const app = {
         footerEl.textContent = `Powered by ${providerName}${modelName}`;
     }
 };
+
+// The Phaser ES-module bridge and canvas managers consume the application
+// model without coupling rendering code to this DOM controller.
+window.app = app;
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {

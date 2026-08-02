@@ -57,8 +57,13 @@ app.get('/api/ping', (req, res) => {
     res.json({ pong: true, time: new Date().toISOString(), message: "Server is running with latest Pax Historia routes" });
 });
 
-// Static files (MOVE AFTER API ROUTES)
-app.use(express.static(path.join(__dirname, '../frontend')));
+// Prefer Vite's production output when present, while retaining source assets
+// for development without requiring two servers.
+const fs = require('fs');
+const frontendSource = path.join(__dirname, '../frontend');
+const frontendDist = path.join(frontendSource, 'dist');
+const frontendRoot = fs.existsSync(path.join(frontendDist, 'index.html')) ? frontendDist : frontendSource;
+app.use(express.static(frontendRoot));
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -74,7 +79,7 @@ app.use('/api', (req, res) => {
 
 // Serve frontend
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/index.html'));
+    res.sendFile(path.join(frontendRoot, 'index.html'));
 });
 
 // WebSocket connection handling
