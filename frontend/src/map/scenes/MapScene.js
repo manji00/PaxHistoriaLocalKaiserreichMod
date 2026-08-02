@@ -47,7 +47,6 @@ export class MapScene extends Phaser.Scene {
   create() {
     this.add.existing(new CanvasWorld(this, this.model));
     this.input.on('pointermove', pointer => this.bridge.handlePointerMove(pointer));
-    this.input.on('pointerup', pointer => this.bridge.handlePointerUp(pointer));
     this.cameraController = new CameraController(this, this.bridge);
     this.cameraController.bind();
     this.bridge.sceneReady(this);

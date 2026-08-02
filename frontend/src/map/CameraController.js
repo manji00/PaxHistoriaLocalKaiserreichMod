@@ -64,10 +64,12 @@ export class CameraController {
 
   handlePointerUp(pointer) {
     if (this.dragPointerId !== pointer.id) return;
+    const wasDragging = this.dragDistance >= this.dragThreshold;
     this.dragPointerId = null;
     this.lastPointer = null;
     this.dragDistance = 0;
     this.bridge.setDragging(false);
+    this.bridge.handlePointerUp(pointer, { wasDragging });
   }
 
   isPanButton(pointer) {
