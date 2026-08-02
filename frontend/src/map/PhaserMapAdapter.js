@@ -7,22 +7,28 @@ import { runtimeConfig } from '../config.js';
 export class PhaserMapAdapter {
   async initialize(container) {
     this.container = typeof container === 'string' ? document.querySelector(container) : container;
+    if (!this.container) throw new Error('Phaser map container was not found');
+    const mapScene = new MapScene(this);
     this.game = new Phaser.Game({ type: Phaser.CANVAS, parent: this.container, backgroundColor: '#9fc5df',
       width: this.container.clientWidth, height: this.container.clientHeight,
-      resolution: Math.min(devicePixelRatio || 1, runtimeConfig.maxDevicePixelRatio), scene: [MapScene],
+      resolution: Math.min(globalThis.devicePixelRatio || 1, runtimeConfig.maxDevicePixelRatio), scene: mapScene,
       banner: false, render: { antialias: true, roundPixels: false } });
     this.observer = new ResizeObserver(() => this.resize()); this.observer.observe(this.container);
   }
-  sceneReady(scene) { this.scene = scene; this.controller.emit('ready', {}); }
+  sceneReady(scene) {
+    this.scene = scene;
+    console.info(`[Pax Historia] Phaser ${Phaser.VERSION} map renderer started`);
+    this.controller.emit('ready', { engine: 'Phaser', version: Phaser.VERSION });
+  }
   async loadScenario(scenario) {
     this.abort?.abort(); this.abort = new AbortController();
     try {
       const id = scenario.id || 'original_wk';
       const [artifact, mapData, colors, cities] = await Promise.all([
         loadGeometry(scenario.geometry || `maps/${id}.geometry.json`, this.abort.signal),
-        fetch(`/api/map/geojson?scenario_id=${encodeURIComponent(id)}`, { signal: this.abort.signal }).then(r => r.json()),
-        fetch(`/api/map/colors?scenario_id=${encodeURIComponent(id)}`, { signal: this.abort.signal }).then(r => r.json()),
-        fetch(`/api/map/cities?scenario_id=${encodeURIComponent(id)}`, { signal: this.abort.signal }).then(r => r.json())
+        fetch(`${runtimeConfig.apiBaseUrl}/api/map/geojson?scenario_id=${encodeURIComponent(id)}`, { signal: this.abort.signal }).then(r => r.json()),
+        fetch(`${runtimeConfig.apiBaseUrl}/api/map/colors?scenario_id=${encodeURIComponent(id)}`, { signal: this.abort.signal }).then(r => r.json()),
+        fetch(`${runtimeConfig.apiBaseUrl}/api/map/cities?scenario_id=${encodeURIComponent(id)}`, { signal: this.abort.signal }).then(r => r.json())
       ]);
       this.artifact = artifact; this.regions = mapData.regions; this.colors = colors;
       this.scene.model.regions.load(artifact, this.regions, colors); this.scene.model.cities = cities;
