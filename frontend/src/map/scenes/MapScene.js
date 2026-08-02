@@ -3,7 +3,14 @@ import { DEPTH } from '../rendering/layers.js';
 import { RegionLayer } from '../layers/RegionLayer.js';
 
 class CanvasWorld extends Phaser.GameObjects.GameObject {
-  constructor(scene, model) { super(scene, 'CanvasWorld'); this.model = model; this.setDepth(DEPTH.regions); }
+  constructor(scene, model) {
+    super(scene, 'CanvasWorld');
+    this.model = model;
+    // Phaser's bare GameObject does not include the Depth component (and thus
+    // has no setDepth method). The display list still sorts custom game
+    // objects by their depth property.
+    this.depth = DEPTH.regions;
+  }
   renderCanvas(renderer, src, camera) {
     const ctx = renderer.currentContext;
     ctx.save();
