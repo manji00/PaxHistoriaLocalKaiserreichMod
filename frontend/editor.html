@@ -1,12 +1,20 @@
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pax Historia – Szenario-Editor</title>
   <link rel="stylesheet" href="css/editor.css">
 </head>
 <body>
-  <header><a href="/">← Spiel</a><div><strong>SZENARIO-WERKSTATT</strong><small>Karte, Länder und Gebiete bearbeiten</small></div><button id="save">Änderungen speichern</button></header>
+  <header>
+    <a href="/">← Spiel</a>
+    <div>
+      <strong>SZENARIO-WERKSTATT</strong>
+      <small>Karte, Länder und Gebiete bearbeiten</small>
+    </div>
+    <button id="save">Änderungen speichern</button>
+  </header>
   <main>
     <aside class="scenario-pane">
       <label>Szenario<select id="scenario-select"></select></label>
@@ -16,8 +24,20 @@
       <input id="nation-search" placeholder="Land oder Code suchen …">
       <div id="nation-list" class="nation-list"></div>
     </aside>
+    <div id="scenario-resizer" class="pane-resizer" role="separator" aria-label="Breite der Szenario-Einstellungen ändern" aria-orientation="vertical" tabindex="0"></div>
     <section class="map-pane">
-      <div class="map-toolbar"><span id="map-hint">Wähle ein Land und klicke Gebiete an, um sie zuzuweisen.</span><label><input id="paint-mode" type="checkbox"> Gebiete direkt zuweisen</label></div>
+      <div class="map-toolbar">
+        <span id="map-hint">Klicke ein Gebiet an, um sein Land auszuwählen.</span>
+        <div class="map-tools">
+          <div class="zoom-controls" aria-label="Kartenzoom">
+            <button id="zoom-out" type="button" class="tool-button" title="Verkleinern" aria-label="Karte verkleinern">−</button>
+            <output id="zoom-level" for="zoom-in zoom-out">100 %</output>
+            <button id="zoom-in" type="button" class="tool-button" title="Vergrößern" aria-label="Karte vergrößern">＋</button>
+            <button id="zoom-reset" type="button" class="tool-button reset-button" title="Zoom zurücksetzen">Zurücksetzen</button>
+          </div>
+          <label><input id="paint-mode" type="checkbox"> Gebiete direkt zuweisen</label>
+        </div>
+      </div>
       <div id="map-wrap"><svg id="editor-map"></svg></div>
       <div id="status">Bereit</div>
     </section>
