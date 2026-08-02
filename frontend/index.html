@@ -566,6 +566,19 @@
         <!-- Toast Notifications -->
         <div id="toast-container" class="toast-container"></div>
 
+    <!--
+        Express serves this source file when no Vite production build exists.
+        In that mode the browser needs an import map for Vite's bare Phaser
+        module specifier. Vite ignores the map and bundles the pinned package
+        normally for development and production builds.
+    -->
+    <script type="importmap">
+        {
+            "imports": {
+                "phaser": "https://esm.sh/phaser@4.0.0-rc.5"
+            }
+        }
+    </script>
     <!-- Phaser 4/Vite entry point. UI remains accessible HTML. -->
     <script type="module" src="/src/main.js"></script>
 </body>
