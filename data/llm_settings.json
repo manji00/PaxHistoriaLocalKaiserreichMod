@@ -1,0 +1,6 @@
+{
+  "provider": "google",
+  "apiUrl": "https://generativelanguage.googleapis.com/v1beta/openai/",
+  "apiKey": "AIzaSyB3C-Pk5yBLaGurqy7H0-sqUvc41eKl0Vs",
+  "model": "gemini-3.6-flash"
+}
