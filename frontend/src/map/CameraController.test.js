@@ -12,8 +12,17 @@ describe('CameraController', () => {
     const { bridge, camera } = controller();
     camera.handleWheel({}, [], 0, 12, 0, { ctrlKey: true, preventDefault() {} });
     camera.handleWheel({}, [], 0, -9, 0, { altKey: true, preventDefault() {} });
-    expect(bridge.panBy).toHaveBeenNthCalledWith(1, 0, 12);
-    expect(bridge.panBy).toHaveBeenNthCalledWith(2, -9, 0);
+    expect(bridge.panBy).toHaveBeenNthCalledWith(1, 12, 0);
+    expect(bridge.panBy).toHaveBeenNthCalledWith(2, 0, -9);
+  });
+
+  it('reads wheel modifiers from the Phaser pointer when no event argument is supplied', () => {
+    const { bridge, camera } = controller();
+    const preventDefault = vi.fn();
+    camera.handleWheel({ event: { ctrlKey: true, deltaMode: 1, preventDefault } }, [], 0, 2);
+    expect(bridge.panBy).toHaveBeenCalledWith(48, 0);
+    expect(bridge.zoomBy).not.toHaveBeenCalled();
+    expect(preventDefault).toHaveBeenCalled();
   });
 
   it('zooms without a modifier and pans more slowly while dragging', () => {

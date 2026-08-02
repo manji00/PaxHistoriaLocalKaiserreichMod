@@ -29,13 +29,16 @@ export class CameraController {
   }
 
   handleWheel(pointer, _objects, _deltaX, deltaY, _deltaZ, event) {
-    event?.preventDefault();
-    const multiplier = event?.deltaMode === 1 ? 24 : 1;
+    // Phaser 4 does not consistently pass the native WheelEvent as the last
+    // argument. It is, however, retained on the pointer in every input mode.
+    const wheelEvent = event || pointer?.event;
+    wheelEvent?.preventDefault();
+    const multiplier = wheelEvent?.deltaMode === 1 ? 24 : 1;
     const movement = deltaY * multiplier;
-    if (event?.ctrlKey) {
-      this.bridge.panBy(0, movement);
-    } else if (event?.altKey || event?.shiftKey) {
+    if (wheelEvent?.ctrlKey) {
       this.bridge.panBy(movement, 0);
+    } else if (wheelEvent?.altKey || wheelEvent?.shiftKey) {
+      this.bridge.panBy(0, movement);
     } else {
       this.bridge.zoomBy(deltaY < 0 ? 1.18 : 0.85, pointer);
     }

@@ -53,7 +53,21 @@ export class PhaserMapAdapter {
   focusRegion(id) { const v = this.scene.model.regions.views.get(String(id)); if (!v) return; this.scene.cameras.main.centerOn(v.centroid[0], v.centroid[1]); this.selectRegion(id); }
   focusNation(code) { const views = [...this.scene.model.regions.views.values()].filter(v => v.region.nation_code === code); if (!views.length) return; const x = views.reduce((n,v)=>n+v.centroid[0],0)/views.length, y=views.reduce((n,v)=>n+v.centroid[1],0)/views.length; this.scene.cameras.main.centerOn(x,y); }
   setLayerVisibility(layer, visible) { if (this.scene.model[layer]) this.scene.model[`${layer}Visible`] = visible; }
-  pointerToScreen(pointer) { const event = pointer.event, rect = this.game.canvas.getBoundingClientRect(); if (event && Number.isFinite(event.clientX) && rect.width && rect.height) return { x: (event.clientX - rect.left) * this.scene.cameras.main.width / rect.width, y: (event.clientY - rect.top) * this.scene.cameras.main.height / rect.height }; return { x: pointer.x, y: pointer.y }; }
+  pointerToScreen(pointer) {
+    // Phaser's Pointer coordinates have already been converted from CSS/client
+    // pixels into the Scale Manager's game coordinates. Re-scaling clientX/Y
+    // here applies the device-pixel ratio a second time and moves hit tests
+    // progressively farther away from the cursor.
+    if (Number.isFinite(pointer?.x) && Number.isFinite(pointer?.y)) {
+      return { x: pointer.x, y: pointer.y };
+    }
+    const event = pointer?.event;
+    const rect = this.game.canvas.getBoundingClientRect();
+    return {
+      x: (event.clientX - rect.left) * this.scene.cameras.main.width / rect.width,
+      y: (event.clientY - rect.top) * this.scene.cameras.main.height / rect.height
+    };
+  }
   screenToWorld({ x, y }) { const point = this.scene.cameras.main.getWorldPoint(x, y); return { x: point.x, y: point.y }; }
   worldToScreen({ x, y }) { const c = this.scene.cameras.main; return { x: (x-c.scrollX)*c.zoom, y: (y-c.scrollY)*c.zoom }; }
   cameraChanged() { clearTimeout(this.cameraTimer); this.cameraTimer=setTimeout(()=>this.controller.emit('camera-changed',{ camera:this.scene.cameras.main }),50); }
