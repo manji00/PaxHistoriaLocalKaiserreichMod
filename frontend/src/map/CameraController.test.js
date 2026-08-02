@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { CameraController } from './CameraController.js';
 
 function controller() {
-  const bridge = { panBy: vi.fn(), zoomBy: vi.fn(), setDragging: vi.fn() };
+  const bridge = { panBy: vi.fn(), zoomBy: vi.fn(), setDragging: vi.fn(), handlePointerUp: vi.fn() };
   const input = { mouse: { disableContextMenu: vi.fn() }, on: vi.fn(), off: vi.fn() };
   return { bridge, camera: new CameraController({ input }, bridge) };
 }
@@ -38,6 +38,7 @@ describe('CameraController', () => {
     expect(bridge.panBy.mock.calls[0][0]).toBeCloseTo(-4.55);
     expect(bridge.panBy.mock.calls[0][1]).toBeCloseTo(1.95);
     expect(bridge.setDragging.mock.calls).toEqual([[true], [false]]);
+    expect(bridge.handlePointerUp).toHaveBeenCalledWith(pointer, { wasDragging: true });
   });
 
   it('does not turn a left click into a drag before the movement threshold', () => {
@@ -49,5 +50,6 @@ describe('CameraController', () => {
     camera.handlePointerUp(pointer);
     expect(bridge.panBy).not.toHaveBeenCalled();
     expect(bridge.setDragging).toHaveBeenCalledWith(false);
+    expect(bridge.handlePointerUp).toHaveBeenCalledWith(pointer, { wasDragging: false });
   });
 });

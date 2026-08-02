@@ -47,7 +47,13 @@ export class PhaserMapAdapter {
   setDragging(active) { this.dragging = active; this.game.canvas.style.cursor = active ? 'grabbing' : ''; }
   resetView() { const c = this.scene.cameras.main, v = this.artifact.viewBox; this.minZoom = fitScale(v, { width: c.width, height: c.height }); c.setZoom(this.minZoom); c.centerOn(v.x + v.width / 2, v.y + v.height / 2); this.cameraChanged(); }
   handlePointerMove(pointer) { if (!this.artifact || this.dragging) return; const p = this.screenToWorld(this.pointerToScreen(pointer)), ctx = this.game.canvas.getContext('2d'), hit = this.scene.model.regions.hitTest(p.x, p.y, ctx); if (hit !== this.scene.model.hovered) { this.scene.model.hovered = hit; this.controller.emit('region-hover', hit?.region || null); } }
-  handlePointerUp(pointer) { if (this.dragging || pointer.rightButtonReleased?.() || pointer.getDistance?.() > 6) return; const p = this.screenToWorld(this.pointerToScreen(pointer)), hit = this.scene.model.regions.hitTest(p.x, p.y, this.game.canvas.getContext('2d')); if (hit) this.selectRegion(hit.region.id); }
+  handlePointerUp(pointer, { wasDragging = false } = {}) {
+    const button = pointer.event?.button ?? pointer.button;
+    if (wasDragging || button !== 0) return;
+    const p = this.screenToWorld(this.pointerToScreen(pointer));
+    const hit = this.scene.model.regions.hitTest(p.x, p.y, this.game.canvas.getContext('2d'));
+    if (hit) this.selectRegion(hit.region.id);
+  }
   selectRegion(id, emit = true) { const view = this.scene.model.regions.views.get(String(id)); this.scene.model.selected = view || null; if (view && emit) this.controller.emit('region-selected', view.region); }
   clearSelection() { this.scene.model.selected = null; }
   focusRegion(id) { const v = this.scene.model.regions.views.get(String(id)); if (!v) return; this.scene.cameras.main.centerOn(v.centroid[0], v.centroid[1]); this.selectRegion(id); }

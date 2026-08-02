@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { PhaserMapAdapter } from './PhaserMapAdapter.js';
 
 describe('PhaserMapAdapter pointer coordinates', () => {
@@ -25,5 +25,32 @@ describe('PhaserMapAdapter pointer coordinates', () => {
 
     expect(adapter.pointerToScreen({ event: { clientX: 135, clientY: 95 } }))
       .toEqual({ x: 250, y: 150 });
+  });
+});
+
+describe('PhaserMapAdapter selection', () => {
+  function selectionAdapter() {
+    const adapter = new PhaserMapAdapter();
+    const hitTest = vi.fn(() => ({ region: { id: '42' } }));
+    adapter.game = { canvas: { getContext: vi.fn(() => ({})) } };
+    adapter.scene = { model: { regions: { hitTest } } };
+    adapter.pointerToScreen = vi.fn(() => ({ x: 10, y: 20 }));
+    adapter.screenToWorld = vi.fn(point => point);
+    adapter.selectRegion = vi.fn();
+    return { adapter, hitTest };
+  }
+
+  it('selects a region on an undragged primary click', () => {
+    const { adapter } = selectionAdapter();
+    adapter.handlePointerUp({ button: 0 }, { wasDragging: false });
+    expect(adapter.selectRegion).toHaveBeenCalledWith('42');
+  });
+
+  it('does not select after dragging or with a non-primary button', () => {
+    const { adapter, hitTest } = selectionAdapter();
+    adapter.handlePointerUp({ button: 0 }, { wasDragging: true });
+    adapter.handlePointerUp({ button: 2 }, { wasDragging: false });
+    expect(hitTest).not.toHaveBeenCalled();
+    expect(adapter.selectRegion).not.toHaveBeenCalled();
   });
 });
