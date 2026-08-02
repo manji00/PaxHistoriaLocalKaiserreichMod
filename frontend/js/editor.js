@@ -1,5 +1,6 @@
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 6;
+const REGION_FOCUS_ZOOM = 6;
 const ZOOM_STEP = 0.25;
 const MIN_SCENARIO_PANE_WIDTH = 230;
 const DEFAULT_SCENARIO_PANE_WIDTH = 310;
@@ -284,16 +285,23 @@ function focusRegion(id) {
   selectedRegion = id;
   highlightRegion(id);
 
-  // Only move the map viewport. scrollIntoView() also scrolls outer ancestors
-  // and could consequently move the editor header out of the viewport.
+  // Region selection always uses the same, predictable detail level. Center
+  // with SVG coordinates instead of screen bounds: the latter still describe
+  // the old layout while the browser is applying a new zoom level.
+  setZoom(REGION_FOCUS_ZOOM);
+
   const mapWrap = $('#map-wrap');
-  const pathBounds = path.getBoundingClientRect();
-  const mapBounds = mapWrap.getBoundingClientRect();
+  const svg = $('#editor-map');
+  const viewBox = svg.viewBox.baseVal;
+  const pathBounds = path.getBBox();
+  const scaleX = svg.clientWidth / viewBox.width;
+  const scaleY = svg.clientHeight / viewBox.height;
+  const centerX = (pathBounds.x + pathBounds.width / 2 - viewBox.x) * scaleX;
+  const centerY = (pathBounds.y + pathBounds.height / 2 - viewBox.y) * scaleY;
+
   mapWrap.scrollTo({
-    left: mapWrap.scrollLeft + pathBounds.left - mapBounds.left
-      - (mapWrap.clientWidth - pathBounds.width) / 2,
-    top: mapWrap.scrollTop + pathBounds.top - mapBounds.top
-      - (mapWrap.clientHeight - pathBounds.height) / 2,
+    left: centerX - mapWrap.clientWidth / 2,
+    top: centerY - mapWrap.clientHeight / 2,
     behavior: 'smooth'
   });
 }
@@ -385,11 +393,23 @@ function setZoom(nextZoom, pointer) {
 
 function applyZoom() {
   const svg = $('#editor-map');
-  if (!svg) return;
+  const mapWrap = $('#map-wrap');
+  if (!svg || !mapWrap) return;
 
-  svg.style.width = `${zoom * 100}%`;
-  svg.style.height = `${zoom * 100}%`;
-  svg.style.minWidth = `${900 * zoom}px`;
+  const viewBox = svg.viewBox.baseVal;
+  if (!viewBox.width || !viewBox.height) return;
+
+  // Fit the complete map into the actual viewport at 100%. Zooming then grows
+  // that compact canvas, rather than multiplying an arbitrary 900px minimum
+  // width and a separately calculated percentage height.
+  const fitScale = Math.min(
+    mapWrap.clientWidth / viewBox.width,
+    mapWrap.clientHeight / viewBox.height
+  );
+
+  svg.style.width = `${viewBox.width * fitScale * zoom}px`;
+  svg.style.height = `${viewBox.height * fitScale * zoom}px`;
+  svg.style.minWidth = '0';
   $('#zoom-level').textContent = `${Math.round(zoom * 100)} %`;
 }
 
