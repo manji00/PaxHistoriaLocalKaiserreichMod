@@ -283,7 +283,19 @@ function focusRegion(id) {
 
   selectedRegion = id;
   highlightRegion(id);
-  path.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+
+  // Only move the map viewport. scrollIntoView() also scrolls outer ancestors
+  // and could consequently move the editor header out of the viewport.
+  const mapWrap = $('#map-wrap');
+  const pathBounds = path.getBoundingClientRect();
+  const mapBounds = mapWrap.getBoundingClientRect();
+  mapWrap.scrollTo({
+    left: mapWrap.scrollLeft + pathBounds.left - mapBounds.left
+      - (mapWrap.clientWidth - pathBounds.width) / 2,
+    top: mapWrap.scrollTop + pathBounds.top - mapBounds.top
+      - (mapWrap.clientHeight - pathBounds.height) / 2,
+    behavior: 'smooth'
+  });
 }
 
 function showRegion(id) {
