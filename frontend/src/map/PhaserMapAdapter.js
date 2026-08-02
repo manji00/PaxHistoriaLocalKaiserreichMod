@@ -41,7 +41,17 @@ export class PhaserMapAdapter {
   }
   applyGameState(state) { if (state.regions) { this.regions = state.regions; this.scene.model.regions.update(state.regions, this.colors); } if (state.units) this.scene.model.units = state.units; }
   resize() { if (!this.game || !this.container) return; this.game.scale.resize(this.container.clientWidth, this.container.clientHeight); if (this.artifact) this.resetView(); }
-  zoomBy(factor, pointer) { const c = this.scene.cameras.main, anchor = pointer ? this.pointerToScreen(pointer) : { x: c.width / 2, y: c.height / 2 }, before = this.screenToWorld(anchor); c.setZoom(Math.max(this.minZoom, Math.min(8, c.zoom * factor))); const after = this.screenToWorld(anchor); c.scrollX += before.x - after.x; c.scrollY += before.y - after.y; this.cameraChanged(); }
+  zoomBy(factor, pointer) {
+    const c = this.scene.cameras.main;
+    const anchor = pointer ? this.pointerToScreen(pointer) : this.worldToScreen({ x: c.midPoint.x, y: c.midPoint.y });
+    const before = this.screenToWorld(anchor);
+    const oldZoom = c.zoom;
+    const newZoom = Math.max(this.minZoom, Math.min(8, oldZoom * factor));
+    c.setZoom(newZoom);
+    c.scrollX = before.x - (before.x - c.scrollX) * oldZoom / newZoom;
+    c.scrollY = before.y - (before.y - c.scrollY) * oldZoom / newZoom;
+    this.cameraChanged();
+  }
   zoomIn() { this.zoomBy(1.25); } zoomOut() { this.zoomBy(.8); }
   panBy(screenX, screenY) { const c = this.scene.cameras.main; c.scrollX += screenX / c.zoom; c.scrollY += screenY / c.zoom; this.cameraChanged(); }
   setDragging(active) { this.dragging = active; this.game.canvas.style.cursor = active ? 'grabbing' : ''; }
@@ -60,30 +70,41 @@ export class PhaserMapAdapter {
   focusNation(code) { const views = [...this.scene.model.regions.views.values()].filter(v => v.region.nation_code === code); if (!views.length) return; const x = views.reduce((n,v)=>n+v.centroid[0],0)/views.length, y=views.reduce((n,v)=>n+v.centroid[1],0)/views.length; this.scene.cameras.main.centerOn(x,y); }
   setLayerVisibility(layer, visible) { if (this.scene.model[layer]) this.scene.model[`${layer}Visible`] = visible; }
   pointerToScreen(pointer) {
-    // Phaser's Pointer coordinates have already been converted from CSS/client
-    // pixels into the Scale Manager's game coordinates. Re-scaling clientX/Y
-    // here applies the device-pixel ratio a second time and moves hit tests
-    // progressively farther away from the cursor.
-    if (Number.isFinite(pointer?.x) && Number.isFinite(pointer?.y)) {
-      return { x: pointer.x, y: pointer.y };
-    }
+    // Hit testing is performed in the backing canvas coordinate system because
+    // that is the coordinate system exposed by CanvasRenderingContext2D's
+    // transform. Native client coordinates avoid assumptions about Phaser's
+    // Scale Manager and device-pixel-ratio handling.
     const event = pointer?.event;
     const rect = this.game.canvas.getBoundingClientRect();
+    if (Number.isFinite(event?.clientX) && Number.isFinite(event?.clientY)) {
+      return {
+        x: (event.clientX - rect.left) * this.game.canvas.width / rect.width,
+        y: (event.clientY - rect.top) * this.game.canvas.height / rect.height
+      };
+    }
+    // Programmatic pointers used by tests and keyboard-driven controls do not
+    // necessarily carry a native event.
     return {
-      x: (event.clientX - rect.left) * this.scene.cameras.main.width / rect.width,
-      y: (event.clientY - rect.top) * this.scene.cameras.main.height / rect.height
+      x: pointer.x * this.game.canvas.width / this.scene.cameras.main.width,
+      y: pointer.y * this.game.canvas.height / this.scene.cameras.main.height
+    };
+  }
+  captureWorldTransform(matrix) {
+    this.worldTransform = {
+      a: matrix.a, b: matrix.b, c: matrix.c,
+      d: matrix.d, e: matrix.e, f: matrix.f
     };
   }
   screenToWorld({ x, y }) {
-    // CanvasWorld is rendered with exactly this translation and scale (see
-    // MapScene). Do not use Camera.getWorldPoint here: Phaser derives that
-    // value from the camera matrix prepared during the last render. Input can
-    // change scroll/zoom between renders, leaving that matrix one input event
-    // behind and making the hit-test offset grow after panning or zooming.
-    const c = this.scene.cameras.main;
-    return { x: x / c.zoom + c.scrollX, y: y / c.zoom + c.scrollY };
+    const m = this.worldTransform;
+    if (!m) return { x: NaN, y: NaN };
+    const determinant = m.a * m.d - m.b * m.c;
+    return {
+      x: (m.d * (x - m.e) - m.c * (y - m.f)) / determinant,
+      y: (-m.b * (x - m.e) + m.a * (y - m.f)) / determinant
+    };
   }
-  worldToScreen({ x, y }) { const c = this.scene.cameras.main; return { x: (x-c.scrollX)*c.zoom, y: (y-c.scrollY)*c.zoom }; }
+  worldToScreen({ x, y }) { const m = this.worldTransform; return m ? { x: m.a*x + m.c*y + m.e, y: m.b*x + m.d*y + m.f } : { x: NaN, y: NaN }; }
   cameraChanged() { clearTimeout(this.cameraTimer); this.cameraTimer=setTimeout(()=>this.controller.emit('camera-changed',{ camera:this.scene.cameras.main }),50); }
   destroy() { this.abort?.abort(); this.observer?.disconnect(); this.game?.destroy(true); }
 }
