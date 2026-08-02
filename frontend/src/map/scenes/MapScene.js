@@ -17,6 +17,9 @@ class CanvasWorld extends Phaser.GameObjects.GameObject {
     ctx.save();
     ctx.translate(-camera.scrollX * camera.zoom, -camera.scrollY * camera.zoom);
     ctx.scale(camera.zoom, camera.zoom);
+    // Keep the exact transform used by the renderer for input hit testing.
+    // This includes Phaser's resolution/base transform as well as the camera.
+    src.scene.bridge.captureWorldTransform(ctx.getTransform());
     for (const view of src.model.regions.views.values()) {
       ctx.fillStyle = view === src.model.hovered ? '#f4d35e' : view === src.model.selected ? '#ffe66d' : view.fill;
       ctx.strokeStyle = view === src.model.selected ? '#ffffff' : '#111827';
