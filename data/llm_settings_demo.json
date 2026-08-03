@@ -1,0 +1,7 @@
+{
+  "_instructions": "Diese Datei nach llm_settings.json umbenennen und YOUR_GOOGLE_API_KEY durch den eigenen Google API Key ersetzen. llm_settings.json wird von Git ignoriert und darf nicht eingecheckt werden.",
+  "provider": "google",
+  "apiUrl": "https://generativelanguage.googleapis.com/v1beta/openai/",
+  "apiKey": "YOUR_GOOGLE_API_KEY",
+  "model": "gemini-3.6-flash"
+}
