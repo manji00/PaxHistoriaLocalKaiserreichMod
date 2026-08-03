@@ -2046,6 +2046,24 @@ textarea::placeholder {
     letter-spacing: 0.06em;
 }
 
+.map-layer-controls {
+    position: absolute;
+    z-index: 4;
+    right: var(--spacing-md);
+    bottom: var(--spacing-md);
+    display: grid;
+    gap: 5px;
+    padding: 8px 10px 10px;
+    color: var(--text-secondary);
+    background: rgba(11, 17, 23, .9);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    font-size: .72rem;
+    backdrop-filter: blur(6px);
+}
+.map-layer-controls legend { padding: 0 4px; color: var(--text-primary); font-family: var(--font-mono); }
+.map-layer-controls label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
 .mini-search {
     margin-bottom: var(--spacing-md);
 }

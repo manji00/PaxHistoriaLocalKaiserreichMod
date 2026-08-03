@@ -15,6 +15,11 @@ let zoom = 1;
 const mapAdapter = new PhaserMapAdapter();
 const mapController = new MapController(mapAdapter);
 
+document.addEventListener('change', event => {
+  const layer = event.target?.dataset?.mapLayer;
+  if (layer) mapController.setLayerVisibility(layer, event.target.checked);
+});
+
 const backendOrigin = getBackendOrigin();
 
 function getBackendOrigin() {

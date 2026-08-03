@@ -30,6 +30,12 @@
         <span id="map-hint">Klicke ein Gebiet an, um sein Land auszuwählen.</span>
         <div class="map-tools">
           <label><input id="paint-mode" type="checkbox"> Gebiete direkt zuweisen</label>
+          <fieldset class="layer-controls" aria-label="Kartenebenen">
+            <legend>Ebenen</legend>
+            <label><input type="checkbox" data-map-layer="cities" checked> Städte</label>
+            <label><input type="checkbox" data-map-layer="units" checked> Einheiten</label>
+            <label><input type="checkbox" data-map-layer="labels" checked> Länder-/Gebietsnamen</label>
+          </fieldset>
         </div>
       </div>
       <div class="map-viewport">

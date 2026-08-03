@@ -68,7 +68,11 @@ export class PhaserMapAdapter {
   clearSelection() { this.scene.model.selected = null; }
   focusRegion(id) { const v = this.scene.model.regions.views.get(String(id)); if (!v) return; this.scene.cameras.main.centerOn(v.centroid[0], v.centroid[1]); this.selectRegion(id); }
   focusNation(code) { const views = [...this.scene.model.regions.views.values()].filter(v => v.region.nation_code === code); if (!views.length) return; const x = views.reduce((n,v)=>n+v.centroid[0],0)/views.length, y=views.reduce((n,v)=>n+v.centroid[1],0)/views.length; this.scene.cameras.main.centerOn(x,y); }
-  setLayerVisibility(layer, visible) { if (this.scene.model[layer]) this.scene.model[`${layer}Visible`] = visible; }
+  setLayerVisibility(layer, visible) {
+    if (!['labels', 'cities', 'units'].includes(layer) || !this.scene) return false;
+    this.scene.model[`${layer}Visible`] = Boolean(visible);
+    return true;
+  }
   pointerToScreen(pointer) {
     // Hit testing is performed in the backing canvas coordinate system because
     // that is the coordinate system exposed by CanvasRenderingContext2D's
