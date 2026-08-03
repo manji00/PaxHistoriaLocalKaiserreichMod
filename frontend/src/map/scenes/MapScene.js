@@ -26,17 +26,29 @@ class CanvasWorld extends Phaser.GameObjects.GameObject {
       ctx.lineWidth = (view === src.model.selected ? 1.5 : 0.3) / camera.zoom;
       ctx.fill(view.path, 'evenodd'); ctx.stroke(view.path);
     }
-    for (const label of src.model.labels) {
+    const occupiedLabelBoxes = [];
+    if (src.model.labelsVisible) for (const label of [...src.model.labels].sort((a, b) => (b.size || 0) - (a.size || 0))) {
+      const size = Math.max(3, Math.min(7, label.size || 5));
+      const width = Math.min(label.maxWidth || size * 11, Math.max(size * 4, label.text.length * size * .62));
+      const box = { left: label.x - width / 2 - 2, right: label.x + width / 2 + 2,
+        top: label.y - size / 2 - 1, bottom: label.y + size / 2 + 1 };
+      if (occupiedLabelBoxes.some(other => box.left < other.right && box.right > other.left && box.top < other.bottom && box.bottom > other.top)) continue;
+      occupiedLabelBoxes.push(box);
       ctx.save(); ctx.translate(label.x, label.y); ctx.rotate((label.angle || 0) * Math.PI / 180);
-      ctx.font = `600 ${label.size || 8}px Cinzel`; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,.78)';
-      ctx.fillText(label.text, 0, 0); ctx.restore();
+      ctx.font = `600 ${size}px Cinzel, serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(.65, size * .16); ctx.strokeStyle = 'rgba(15,23,42,.72)';
+      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      const maxWidth = label.maxWidth || Math.max(22, size * 11);
+      ctx.strokeText(label.text, 0, 0, maxWidth); ctx.fillText(label.text, 0, 0, maxWidth); ctx.restore();
     }
-    for (const city of src.model.cities) {
+    if (src.model.citiesVisible) for (const city of src.model.cities) {
+      if (!Array.isArray(city.coords)) continue;
       ctx.fillStyle = city.type === 'capital' ? '#f5c542' : '#f8fafc'; ctx.beginPath();
-      ctx.arc(city.coords[0], city.coords[1], city.type === 'capital' ? 2.4 : 1.4, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#172033'; ctx.lineWidth = .55 / camera.zoom;
+      ctx.arc(city.coords[0], city.coords[1], city.type === 'capital' ? 2 : 1.15, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     }
-    for (const unit of src.model.units) {
-      const c = unit.centroid; if (!Array.isArray(c)) continue;
+    if (src.model.unitsVisible) for (const unit of src.model.units) {
+      const c = unit.centroid || unit.coords; if (!Array.isArray(c)) continue;
       ctx.fillStyle = '#172033'; ctx.fillRect(c[0] - 5, c[1] - 4, 10, 8);
       ctx.fillStyle = '#fff'; ctx.font = '6px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('◆', c[0], c[1] + 2);
     }
@@ -46,7 +58,7 @@ class CanvasWorld extends Phaser.GameObjects.GameObject {
 
 export class MapScene extends Phaser.Scene {
   constructor(bridge) { super('MapScene'); this.bridge = bridge; }
-  init(data = {}) { this.bridge = data.bridge || this.bridge; this.model = { regions: new RegionLayer(this), labels: [], cities: [], units: [], selected: null, hovered: null }; }
+  init(data = {}) { this.bridge = data.bridge || this.bridge; this.model = { regions: new RegionLayer(this), labels: [], cities: [], units: [], labelsVisible: true, citiesVisible: true, unitsVisible: true, selected: null, hovered: null }; }
   create() {
     this.add.existing(new CanvasWorld(this, this.model));
     this.input.on('pointermove', pointer => this.bridge.handlePointerMove(pointer));

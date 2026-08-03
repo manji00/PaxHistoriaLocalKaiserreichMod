@@ -38,10 +38,20 @@ for (const id of scenarios) {
       bbox: { x: 0, y: 0, width: Number(source.width), height: Number(source.height) } };
   });
   const nations = JSON.parse(fs.readFileSync(path.join(scenarioDir, 'nations.json'), 'utf8'));
-  const nationLabels = [...nationAnchors].map(([code, points]) => ({ code,
-    text: (nations[code]?.name || code).toUpperCase(),
-    x: points.reduce((n,p)=>n+p[0],0)/points.length, y: points.reduce((n,p)=>n+p[1],0)/points.length,
-    size: points.length > 30 ? 12 : points.length > 8 ? 9 : 6, angle: 0 }));
+  const cities = JSON.parse(fs.readFileSync(path.join(scenarioDir, 'cities.json'), 'utf8'));
+  const capitals = new Map(cities.filter(city => city.type === 'capital' && Array.isArray(city.coords))
+    .map(city => [city.nation_code, city.coords]));
+  // Unmapped legacy regions may still contain their SVG fill as nation_code.
+  // They are not countries and must never leak onto the map as "#RRGGBB".
+  const nationLabels = [...nationAnchors].filter(([code]) => nations[code]).map(([code, points]) => ({ code,
+    text: nations[code].name.toUpperCase(),
+    // A capital is a stable, hand-authored point inside the country's core
+    // territory. Path start points are only a fallback and must not determine
+    // the visible name when a capital is available.
+    x: capitals.get(code)?.[0] ?? points.reduce((n,p)=>n+p[0],0)/points.length,
+    y: capitals.get(code)?.[1] ?? points.reduce((n,p)=>n+p[1],0)/points.length,
+    size: points.length > 30 ? 6 : points.length > 8 ? 5 : 4,
+    maxWidth: points.length > 30 ? 76 : points.length > 8 ? 58 : 42, angle: 0 }));
   const viewBoxParts = String(source.viewBox).trim().split(/[ ,]+/).map(Number);
   const artifact = { version: 1, scenarioId: id,
     viewBox: { x: viewBoxParts[0], y: viewBoxParts[1], width: viewBoxParts[2], height: viewBoxParts[3] },

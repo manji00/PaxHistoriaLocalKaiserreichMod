@@ -32,6 +32,11 @@ controller.addEventListener('region-hover', event => {
 
 Object.assign(window, { gameMap, CityManager, NationLabelManager, UnitManager });
 
+document.addEventListener('change', event => {
+  const layer = event.target?.dataset?.mapLayer;
+  if (layer) controller.setLayerVisibility(layer, event.target.checked);
+});
+
 const scripts = ['js/api.js', 'js/panels/actions-panel.js', 'js/panels/advisor-panel.js',
   'js/panels/diplomacy-panel.js', 'js/panels/events-panel.js', 'js/panels/timeline-panel.js', 'js/app.js'];
 for (const src of scripts) await new Promise((resolve, reject) => {
