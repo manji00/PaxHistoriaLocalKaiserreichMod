@@ -29,7 +29,22 @@ app.locals.wss = wss;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+// Scenario editor payloads include the complete regions file and regularly
+// exceed Express' 100 KB default. Keep a bounded, configurable limit so those
+// legitimate saves work without accepting arbitrarily large request bodies.
+const jsonBodyLimit = process.env.JSON_BODY_LIMIT || '10mb';
+app.use(express.json({ limit: jsonBodyLimit }));
+
+// Return API-shaped errors for oversized JSON instead of Express' HTML error
+// page (and avoid printing a full PayloadTooLargeError stack to the console).
+app.use((error, req, res, next) => {
+    if (error.type === 'entity.too.large') {
+        return res.status(413).json({
+            error: `Request body is too large. The configured limit is ${jsonBodyLimit}.`
+        });
+    }
+    return next(error);
+});
 
 // Request logging middleware
 app.use((req, res, next) => {
