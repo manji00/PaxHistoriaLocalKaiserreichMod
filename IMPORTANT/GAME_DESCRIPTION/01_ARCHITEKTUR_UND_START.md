@@ -24,6 +24,9 @@ JSON- oder Textdateien.
 - `backend/server.js` lädt `.env`, Express, CORS, JSON-Body-Parsing, HTTP und
   WebSocket.
 - Standardport ist `3000`, überschreibbar über `PORT`.
+- JSON-Requests sind standardmäßig auf `10mb` begrenzt, überschreibbar über
+  `JSON_BODY_LIMIT`; dadurch kann der Szenarioeditor seine vollständigen
+  Regionsdaten speichern.
 - Alle API-Router werden unter `/api/...` montiert.
 - Existiert `frontend/dist/index.html`, wird der Vite-Build ausgeliefert;
   andernfalls direkt der Quellordner `frontend/`.
